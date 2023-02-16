@@ -1,0 +1,103 @@
+#!/bin/bash
+
+#Copyright 2023 Johannes Zink <opensource@johannes-zink.de>
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function printUsage {
+	echo "git feaze - break up a commit in multiple commits"
+	echo "Usage: "
+	echo ""
+	echo "start with git feaze <commit-id>"
+	echo ""
+	echo "Add anything to the staging area that belongs to <commit-id> and"
+	echo ""
+	echo "then call git feaze --continue to add it to <commit-id> while keeping"
+	echo "the original commit message."
+	echo ""
+	echo "You can then use git add/git commit to add the unstaged stuff to additional commits."
+	echo "Finish with git feaze --finish, which ends the running git rebase"
+	echo ""
+	echo "abort any running operation and return to where you started with git feaze --abort"
+	echo "Note: git feaze <commit-id> pushs to stash before starting the interactive rebase"
+	echo "and pops from stash after feaze --finish"
+}
+
+function gf_continue {
+	git commit --reuse-message=HEAD@{1}
+}
+
+function gf_finish {
+	git rebase --continue
+	git stash pop
+}
+
+function gf_abort {
+	git rebase --abort
+	git stash pop
+}
+
+function gf_start {
+	if `git cat-file -e $1^{commit}`; then
+		git stash push
+		#git rebase -i $1^
+		GIT_SEQUENCE_EDITOR="sed -i -ze 's/^pick/edit/'" git rebase -i $1^
+		git reset --soft HEAD~
+		git reset @
+	else
+		echo "$1 is not a valid commitish. I did not do anything."
+	fi
+}
+
+COMMITISH=$1
+
+if [ ! -z "$COMMITISH" ]; then
+	case "$COMMITISH" in
+
+	"--continue")
+		gf_continue
+		;;
+
+	"continue")
+		gf_continue
+		;;
+
+	"--finish")
+		gf_finish
+		;;
+
+	"finish")
+		gf_finish
+		;;
+
+	"--abort")
+		gf_abort
+		;;
+
+	"abort")
+		gf_abort
+		;;
+
+        "-h")
+		printUsage ; exit 0
+		;;
+
+	"--help")
+		printUsage ; exit 0
+		;;
+
+	*)
+		gf_start $1
+		;;
+	esac
+
+else
+	printUsage
+	exit 1
+fi
+
+exit 0
