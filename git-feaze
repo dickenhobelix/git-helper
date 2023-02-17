@@ -91,7 +91,7 @@ if [ ! -z "$COMMITISH" ]; then
 		;;
 
 	*)
-		gf_start $1
+		gf_start $COMMITISH
 		;;
 	esac
 
