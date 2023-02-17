@@ -1,0 +1,62 @@
+#!/bin/bash
+
+#Copyright 2023 Johannes Zink <opensource@johannes-zink.de>
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function printUsage {
+	echo "git backup - create a backup copy of the branch you're working on"
+	echo "Usage: "
+	echo ""
+	echo "git backup"
+	echo ""
+	echo "this will automagically create copy of your current branch"
+	echo "and return to where you currently are. Each time you call"
+	echo "this command, a new backup branch is created, using the"
+	echo "current date and incrementing numbers to distinguish each of them."
+
+}
+
+DEFAULT_BACKUP_NAME="backup"
+BACKUP_NAME="${BACKUP:-$DEFAULT_BACKUP_NAME}"
+
+function gb_backup_branch_basename {
+	echo "$1-$BACKUP_NAME-$(date +%Y%m%d)-"
+}
+
+
+function gb_generate_backup_branch {
+	CURRENT_BRANCH=$(git branch --show-current)
+	CURRENT_BASENAME=$(gb_backup_branch_basename "$CURRENT_BRANCH")
+	#get all branches matching <current-branch-name>-<today>-*
+	CANDIDATES=$(git branch -a | grep "$CURRENT_BASENAME")
+	#get highest index in these branches
+	HIGHEST_INDEX=`echo $CANDIDATES | sort -n -r  | head -n 1 | grep -o '[^-]*$'`
+	#calculate the new branch name. if no highest index exists, it evaluates to 0
+	let "NEW_INDEX=$HIGHEST_INDEX + 1"
+	NEW_BRANCH_NAME="$CURRENT_BASENAME$NEW_INDEX"
+	#do the actual branch
+	git branch $NEW_BRANCH_NAME
+	echo "ok, done. backup is in $NEW_BRANCH_NAME"
+}
+
+case "$1" in
+
+	"--help")
+		printUsage
+		;;
+
+	"-h")
+		printUsage
+		;;
+
+	*)
+		gb_generate_backup_branch
+		;;
+esac
+
+exit 0
