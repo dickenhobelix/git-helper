@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#Copyright 2023 Johannes Zink <opensource@johannes-zink.de>
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function printUsage {
+	echo "git extract-useries - extract umpf useries file from umpf tag"
+	echo "Usage:"
+	echo ""
+	echo "git extract-useries <commit-id> [useries-filename]"
+	echo ""
+}
+
+function geu_dump_useries_to_file {
+	if `git cat-file -e $1^{commit}`; then
+		LOG_MSG=`git log --max-count 1 --format='%b' $1`
+		if [[ "$LOG_MSG" == *"# umpf-base:"* ]] ; then
+			echo "$LOG_MSG" > $2
+		else
+			echo "Commit $1 is not an umpf tag (did not find 'umpf-base' in commit msg)"
+			exit 1
+		fi
+	else
+		echo "$1 is not a valid commitish. I did not do anything"
+		exit 1
+	fi
+}
+
+COMMITISH=$1
+DEFAULT_USERIES_NAME="./useries"
+USERIES_FILENAME="${2:-$DEFAULT_USERIES_NAME}"
+
+if [ ! -z "$COMMITISH" ]; then
+	case "$COMMITISH" in
+
+		"--help")
+			print_usage
+			;;
+
+		"-h")
+			print_usage
+			;;
+
+		*)
+			geu_dump_useries_to_file $COMMITISH $USERIES_FILENAME
+			;;
+	esac
+else
+	printUsage
+	exit 1
+fi
+
+exit 0
