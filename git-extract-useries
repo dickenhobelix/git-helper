@@ -39,11 +39,11 @@ if [ ! -z "$COMMITISH" ]; then
 	case "$COMMITISH" in
 
 		"--help")
-			print_usage
+			printUsage
 			;;
 
 		"-h")
-			print_usage
+			printUsage
 			;;
 
 		*)
