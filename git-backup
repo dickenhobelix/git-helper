@@ -14,9 +14,8 @@ function printUsage {
 	echo ""
 	echo "git backup"
 	echo ""
-	echo "this will automagically create copy of your current branch"
-	echo "and return to where you currently are. Each time you call"
-	echo "this command, a new backup branch is created, using the"
+	echo "this will automagically create a tag. Each time you call"
+	echo "this command, a new backup tag is created, using the"
 	echo "current date and incrementing numbers to distinguish each of them."
 
 }
@@ -29,19 +28,19 @@ function gb_backup_branch_basename {
 }
 
 
-function gb_generate_backup_branch {
+function gb_generate_backup_tag {
 	CURRENT_BRANCH=$(git branch --show-current)
 	CURRENT_BASENAME=$(gb_backup_branch_basename "$CURRENT_BRANCH")
 	#get all branches matching <current-branch-name>-<today>-*
-	CANDIDATES=$(git branch -a | grep "$CURRENT_BASENAME")
+	CANDIDATES=$(git tag | grep "$CURRENT_BASENAME")
 	#get highest index in these branches
 	HIGHEST_INDEX=`echo $CANDIDATES | sort -n -r  | head -n 1 | grep -o '[^-]*$'`
 	#calculate the new branch name. if no highest index exists, it evaluates to 0
 	let "NEW_INDEX=$HIGHEST_INDEX + 1"
-	NEW_BRANCH_NAME="$CURRENT_BASENAME$NEW_INDEX"
+	NEW_TAG_NAME="$CURRENT_BASENAME$NEW_INDEX"
 	#do the actual branch
-	git branch $NEW_BRANCH_NAME
-	echo "ok, done. backup is in $NEW_BRANCH_NAME"
+	git tag $NEW_TAG_NAME
+	echo "ok, done. backup is in $NEW_TAG_NAME"
 }
 
 case "$1" in
@@ -55,7 +54,7 @@ case "$1" in
 		;;
 
 	*)
-		gb_generate_backup_branch
+		gb_generate_backup_tag
 		;;
 esac
 
