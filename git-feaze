@@ -33,19 +33,15 @@ function gf_continue {
 
 function gf_finish {
 	git rebase --continue
-	git stash pop
 }
 
 function gf_abort {
 	git rebase --abort
-	git stash pop
 }
 
 function gf_start {
 	if `git cat-file -e $1^{commit}`; then
-		git stash push
-		#git rebase -i $1^
-		GIT_SEQUENCE_EDITOR="sed -i -ze 's/^pick/edit/'" git rebase -i $1^
+		GIT_SEQUENCE_EDITOR="sed -i -ze 's/^pick/edit/'" git rebase --autostash -i $1^
 		git reset --soft HEAD~
 		git reset @
 	else
